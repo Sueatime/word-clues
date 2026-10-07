@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Clues</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--h:230;--bg:hsl(var(--h) 45% 96%);--ink:hsl(var(--h) 50% 18%);--dark:hsl(var(--h) 48% 42%);--light:hsl(var(--h) 70% 84%);--muted:hsl(var(--h) 20% 42%);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:hsl(var(--h) 35% 12%);--ink:hsl(var(--h) 60% 95%);--dark:hsl(var(--h) 50% 52%);--light:hsl(var(--h) 65% 80%);--muted:hsl(var(--h) 25% 70%)}}
+:root[data-theme="dark"]{--bg:hsl(var(--h) 35% 12%);--ink:hsl(var(--h) 60% 95%);--dark:hsl(var(--h) 50% 52%);--light:hsl(var(--h) 65% 80%);--muted:hsl(var(--h) 25% 70%)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Outfit",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:520px;padding:24px 16px 40px;text-align:center}
+h1{margin:0 0 4px;font-size:28px}
+.sub{margin:0 0 20px;color:var(--muted);font-size:15px}
+.score{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.score div{padding:6px 12px;border-radius:8px;border:2px solid var(--muted);font-weight:600;font-size:14px}
+.score .on{border-color:var(--ink);background:var(--light);color:hsl(var(--h) 50% 14%)}
+.clues{display:flex;flex-direction:column;gap:8px;margin:0 auto 20px;max-width:360px}
+.clue{background:var(--dark);color:#fff;border-radius:10px;padding:18px 14px;font-size:clamp(24px,7vw,34px);font-weight:700;text-transform:uppercase;letter-spacing:2px}
+.ans{background:var(--light);color:hsl(var(--h) 50% 14%);outline:3px solid var(--ink);outline-offset:-3px;border-radius:10px;padding:14px;font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:3px;margin:0 auto 16px;max-width:360px}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+button{font:inherit;font-weight:600;padding:12px 18px;border-radius:8px;border:0;background:var(--dark);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--muted)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--light);outline-offset:2px}
+input{font:inherit;font-size:20px;width:200px;padding:10px;border-radius:8px;border:2px solid var(--dark);background:transparent;color:var(--ink);text-align:center}
+#msg{min-height:26px;font-weight:600;margin:0 0 12px}
+.hint{color:var(--muted);font-size:13px;margin-top:4px}
+.tiles{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 auto 16px}
+.tile{width:clamp(40px,12vw,54px);height:clamp(40px,12vw,54px);border-radius:8px;display:grid;place-items:center;font-size:24px;font-weight:700;text-transform:uppercase;background:var(--dark);color:#fff}
+.tile.hid{opacity:.55;font-weight:400}
+.tile.right{font-weight:800;outline:3px solid var(--ink);outline-offset:-3px}
+.marks{margin-top:28px;padding-top:18px;border-top:2px solid var(--muted)}
+.marks h2{margin:0 0 10px;font-size:18px}
+#board{list-style:none;padding:0;margin:0 auto 12px;max-width:320px;text-align:left}
+#board li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1>Word Clues</h1>
+  <p class="sub">Three words, one answer. First to get it earns extra marks.</p>
+  <div id="puzzle"></div>
+  <section class="marks">
+    <h2>Marks</h2>
+    <div class="row"><input id="who" placeholder="Winner's name" autocomplete="off" aria-label="Winner's name"><button id="b3">+3 first</button><button id="b1">+1 correct</button></div>
+    <ul id="board"></ul>
+    <button class="ghost" id="reset">Reset marks</button>
+  </section>
+</main>
+<script>
+const PUZZLES=[["bark","trunk","leaf","tree"],["sand","wave","shell","beach"],["wing","feather","nest","bird"],["moon","star","night","sky"],["page","cover","author","book"],["snow","ice","winter","cold"],["pillow","dream","mattress","bed"],["doctor","nurse","ward","hospital"],["teacher","desk","homework","school"],["engine","wheel","road","car"],["petal","bee","garden","flower"],["bread","oven","flour","bakery"],["coin","bank","wallet","money"],["sail","anchor","captain","ship"],["goal","referee","kick","football"],["cheese","whiskers","tail","mouse"],["mane","roar","jungle","lion"],["cloud","umbrella","puddle","rain"],["lock","door","metal","key"],["string","chord","strum","guitar"],["photo","flash","lens","camera"],["hour","tick","hands","clock"],["hose","helmet","flames","firefighter"],["milk","cow","cream","dairy"],["bean","cup","morning","coffee"],["wool","baa","farm","sheep"],["ticket","screen","popcorn","cinema"],["wheel","pedal","chain","bicycle"]];
+const HUES=[0,15,155,180,205,230,260,285,320];
+let deck=[],cur,state="clues",hue=-1,marks={},confirmReset=false;
+try{marks=JSON.parse(localStorage.getItem("tc_marks")||"{}")}catch(e){marks={}}
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function setHue(){let h;do{h=HUES[Math.floor(Math.random()*HUES.length)]}while(h===hue);hue=h;document.documentElement.style.setProperty("--h",h)}
+function nextPuzzle(){if(!deck.length)deck=shuffle(PUZZLES);cur=deck.pop();setHue();state="clues";drawPuzzle()}
+function tilesHTML(show){return `<div class="tiles" aria-label="Answer tiles">${[...cur[3]].map(ch=>`<div class="tile ${show?"right":"hid"}">${show?ch:"?"}</div>`).join("")}</div>`}
+function drawPuzzle(note=""){
+  let h=`<div class="clues">${cur.slice(0,3).map(w=>`<div class="clue">${w}</div>`).join("")}</div>`+tilesHTML(state==="reveal");
+  if(state==="clues")h+=`<div class="row"><input id="guess" autocomplete="off" aria-label="Your answer" maxlength="${cur[3].length+1}"><button id="chk">Check</button></div><p id="msg">${note}</p><button class="ghost" id="act">Show answer</button>`;
+  else h+=`<p id="msg">${note}</p><div class="row"><button id="act">Next puzzle</button></div>`;
+  $("puzzle").innerHTML=h;
+  $("act").onclick=advance;
+  if(state==="clues"){
+    $("chk").onclick=check;
+    $("guess").onkeydown=e=>{if(e.key==="Enter")check()};
+    $("guess").focus();
+  }else $("act").focus();
+}
+function check(){
+  const v=$("guess").value.trim().toLowerCase();
+  if(!v)return;
+  if(v===cur[3]||v===cur[3]+"s"){state="reveal";drawPuzzle("Correct!")}
+  else{$("msg").textContent="Not quite. Try again.";$("guess").value="";$("guess").focus()}
+}
+function advance(){if(state==="clues"){state="reveal";drawPuzzle("Here is the answer.")}else nextPuzzle()}
+function save(){try{localStorage.setItem("tc_marks",JSON.stringify(marks))}catch(e){}}
+function drawMarks(){
+  const ul=$("board");ul.textContent="";
+  Object.entries(marks).sort((a,b)=>b[1]-a[1]).forEach(([name,pts])=>{
+    const li=document.createElement("li"),a=document.createElement("span"),b=document.createElement("span");
+    a.textContent=name;b.textContent=pts;li.append(a,b);ul.append(li);
+  });
+  $("reset").textContent=confirmReset?"Click again to confirm":"Reset marks";
+}
+function award(pts){
+  const name=$("who").value.trim();if(!name)return;
+  const key=Object.keys(marks).find(k=>k.toLowerCase()===name.toLowerCase())||name;
+  marks[key]=(marks[key]||0)+pts;save();$("who").value="";confirmReset=false;drawMarks();$("who").focus();
+}
+$("b3").onclick=()=>award(3);
+$("b1").onclick=()=>award(1);
+$("who").onkeydown=e=>{if(e.key==="Enter")award(3)};
+$("reset").onclick=()=>{if(!confirmReset){confirmReset=true;drawMarks();return}marks={};save();confirmReset=false;drawMarks()};
+document.addEventListener("keydown",e=>{
+  if((e.key===" "||e.key==="Enter")&&e.target===document.body){e.preventDefault();advance()}
+});
+drawMarks();nextPuzzle();
+</script>
+</body>
+</html>
